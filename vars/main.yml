@@ -1,0 +1,5 @@
+---
+directory: /tmp/dirty_cow_test
+exploit_string: m00000000000000000
+user: testc0w
+uid: 55555

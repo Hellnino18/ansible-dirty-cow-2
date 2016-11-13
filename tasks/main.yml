@@ -1,0 +1,50 @@
+---
+- name: Create User for the test
+  user: name="{{user}}" comment="Test Dirty C0w User" uid="{{uid}}"
+
+- name: Create temp dir
+  file: path="{{directory}}" state=directory
+  become: yes
+  become_user: "{{ user }}"
+
+- name: Copy exploit source file
+  copy: src=dirtyc0w.c dest="{{directory}}/dirtyc0w.c" owner="{{user}}" group="{{user}}"
+
+- name: Compile exploit program
+  shell: "gcc -pthread dirtyc0w.c -o dirtyc0w"
+  args:
+    chdir: "{{directory}}"
+  become: yes
+  become_user: "{{user}}"
+
+- name: Create file with root account
+  copy: src=foo dest="{{directory}}/foo" owner=root group=root mode="0404"
+
+- name: Run exploit
+  shell: "./dirtyc0w foo {{exploit_string}}"
+  args:
+    chdir: "{{directory}}"
+  ignore_errors: yes
+  become: yes
+  become_user: "{{user}}"
+
+- name: Check result
+  shell: "grep {{exploit_string}} foo"
+  args:
+    chdir: "{{directory}}"
+  register: result
+  ignore_errors: yes
+
+- name: Result
+  fail: msg="vulnerable"
+  when: result.rc == 0
+
+- name: Result
+  debug: msg="NOT vulnerable"
+  when: result.rc != 0
+
+- name: Delete temp dir
+  file: path="{{directory}}" state=absent
+
+- name: Delete user "{{user}}"
+  user: name="{{user}}" state=absent

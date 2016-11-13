@@ -1,0 +1,6 @@
+---
+- name: Test Dirty Cow
+  hosts: localhost
+
+  roles:
+    - test-dirty-cow
